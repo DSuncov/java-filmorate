@@ -27,7 +27,7 @@ public class FilmController {
         return listOfFilms;
     }
 
-    @GetMapping(path = {"id"})
+    @GetMapping("{id}")
     public Film getFilmById(@PathVariable("id") Long filmId) {
         Film film = filmService.getFilmById(filmId);
         log.info("Инфопмация о фильме с id = {} отправлена", filmId);
