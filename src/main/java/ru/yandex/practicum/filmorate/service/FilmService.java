@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
@@ -47,8 +46,22 @@ public class FilmService {
         return film;
     }
 
+    public Film update(Film film) {
+        Film updateFilm;
+        if (film != null && film.getId() != null) {
+            updateFilm = update(film.getId(), film);
+        } else {
+            throw new ValidationException("Для обновления фильма задайте id");
+        }
+        return updateFilm;
+    }
+
     public Film update(Long id, Film film) {
         Film oldFilmData = getFilmById(id);
+
+        if (film == null) {
+            return oldFilmData;
+        }
 
         String name = film.getName();
         if (name != null && !name.equals(oldFilmData.getName())) {
@@ -70,7 +83,7 @@ public class FilmService {
 
         oldFilmData.setReleaseDate(releaseDate);
 
-        Duration duration = film.getDuration();
+        Long duration = film.getDuration();
         if (duration != null && !duration.equals(oldFilmData.getDuration())) {
             oldFilmData.setDuration(duration);
         }

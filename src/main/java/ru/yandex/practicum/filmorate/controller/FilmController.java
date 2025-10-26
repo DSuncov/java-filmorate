@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -41,8 +40,13 @@ public class FilmController {
         return newFilm;
     }
 
+    @PutMapping
+    public Film update(@Valid @RequestBody Film film) {
+        return filmService.update(film);
+    }
+
     @PutMapping("{id}")
-    public Film updateFilm(@PathVariable("id") @Min(1) Long filmId, @Valid @RequestBody Film film) {
+    public Film update(@PathVariable("id") Long filmId, @Valid @RequestBody Film film) {
         Film updateFilm = filmService.update(filmId, film);
         log.info("Информация о фильме с id = {} и названием {} обновлена", filmId, film.getName());
         return updateFilm;

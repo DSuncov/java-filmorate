@@ -4,7 +4,6 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.time.Duration;
 import java.time.LocalDate;
 
 /**
@@ -26,9 +25,10 @@ public class Film {
 
     private LocalDate releaseDate;
 
-    private Duration duration;
+    @Positive
+    private Long duration;
 
-    public Film(String name, String description, LocalDate releaseDate, Duration duration) {
+    public Film(String name, String description, LocalDate releaseDate, Long duration) {
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;

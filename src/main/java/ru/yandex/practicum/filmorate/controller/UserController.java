@@ -41,6 +41,11 @@ public class UserController {
         return newUser;
     }
 
+    @PutMapping
+    public User updateUsers(@Valid @RequestBody User user) {
+        return userService.update(user);
+    }
+
     @PutMapping("{id}")
     public User updateUser(@PathVariable("id") @Min(1) Long userId, @Valid @RequestBody User user) {
         User updateUser = userService.update(userId, user);

@@ -51,8 +51,22 @@ public class UserService {
         return user;
     }
 
+    public User update(User user) {
+        User updateUser;
+        if (user != null && user.getId() != null) {
+            updateUser = update(user.getId(), user);
+        } else {
+            throw new ValidationException("Для обновления фильма задайте id");
+        }
+        return updateUser;
+    }
+
     public User update(Long id, User user) {
         User oldUserData = getUserById(id);
+
+        if (user == null) {
+            return oldUserData;
+        }
 
         String email = user.getEmail();
         if (email != null && !email.equals(oldUserData.getEmail())) {
@@ -67,7 +81,7 @@ public class UserService {
             if (Pattern.compile(" ").matcher(user.getLogin()).find()) {
                 throw new ValidationException("Логин не может содержать пробелы");
             }
-            if (findLogin(email).isPresent()) {
+            if (findLogin(login).isPresent()) {
                 throw new ValidationException("Логин = " + login + " занят");
             }
             oldUserData.setLogin(login);
