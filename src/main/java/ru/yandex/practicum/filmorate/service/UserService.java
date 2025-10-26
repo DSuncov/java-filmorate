@@ -62,6 +62,10 @@ public class UserService {
             oldUserData.setEmail(email);
         }
 
+        if (Pattern.compile(" ").matcher(user.getLogin()).find()) {
+            throw new ValidationException("Логин не может содержать пробелы");
+        }
+
         String login = user.getLogin();
         if (login != null && !login.equals(oldUserData.getLogin())) {
             if (findLogin(email).isPresent()) {
