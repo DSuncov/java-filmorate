@@ -34,7 +34,7 @@ public class FilmController {
     }
 
     @GetMapping("/films/popular")
-    public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") Long count ) {
+    public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") Long count) {
         log.info("Ищем топ-{} фильмов по количеству лайков ...", count);
         Collection<Film> listPopularFilms = filmService.getTopFilmsByLike(count);
         log.info("Список из {} самых популярных фильмов отправлен клиенту", count);
