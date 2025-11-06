@@ -1,113 +1,62 @@
 package ru.yandex.practicum.filmorate;
 
-import jakarta.validation.ValidationException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.service.validation.UserServiceValidation;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 public class UserServiceTest {
 
-    final UserService userService = new UserService();
-    final UserController userController = new UserController(userService);
+    private final UserStorage userStorage = new InMemoryUserStorage();
+    private final UserServiceValidation userServiceValidation = new UserServiceValidation(userStorage);
+    private final UserService userService = new UserService(userStorage, userServiceValidation);
 
-    final List<User> users = List.of(
-            new User("ya.user1@yandex.ru", "User1", null, null),
-            new User("ya.user2@yandex.ru", "User2", null, null),
-            new User("ya.user3@yandex.ru", "User3", null, null),
-            new User("ya.user4@yandex.ru", "User4", null, null),
-            new User("ya.user5@yandex.ru", "User5", null, null),
-            new User("ya.user6@yandex.ru", "User6", null, null),
-            new User("ya.user7@yandex.ru", "User7", null, null),
-            new User("ya.user8@yandex.ru", "User8", null, null),
-            new User("ya.user9@yandex.ru", "User9", null, null),
-            new User("ya.user10@yandex.ru", "User10", null, null));
-
-    @BeforeEach
-    public void createUsersForTesting() {
-        for (User user : users) {
-            userController.createUser(user);
-        }
-    }
-
-    @AfterEach
-    public void clear() throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        userService.getMap().clear();
-    }
-
-    @DisplayName("Проверяет размер коллекции, которую возвращает метод getAllUsers")
+    @DisplayName("Проверяем метод create() для создания пользователя с валидными полями")
     @Test
-    void userService_Return_Correct_Numbers_Of_Users() {
-        int expectedSize = 10;
-        assertEquals(expectedSize, userController.getUsers().size());
+    void userService_CreateUser_WithValidFields_Test() {
+        User testUser1 = new User("testUser1email@yandex.ru", "LOGIN", "", LocalDate.of(2000, 1, 1));
+        User testUser2 = new User("testUser1email@yandex.ru", "login", "", LocalDate.of(2000, 1, 1));
+        User testUser3 = new User("testUser3email@yandex.ru", "LOGIN", "", LocalDate.of(2000, 1, 1));
+
+        Optional<User> actualUser = Optional.ofNullable(userService.create(testUser1));
+
+        //Пытаемся добавить пользователя с такой же почтой и логином, должно выброситься исключение
+        assertThrows(DuplicatedDataException.class, () -> userService.create(testUser2));
+        assertThrows(DuplicatedDataException.class, () -> userService.create(testUser3));
+
+        assertTrue(actualUser.isPresent()); // Проверяем, что объект создан
+        assertEquals(1, userStorage.getAllUsers().size());
+        assertEquals("LOGIN", actualUser.get().getName()); // Проверяем, что имя пользователя устанавливается как в логине
+        assertEquals(actualUser.get(), userService.getUserById(1L)); // Проверяем, что пользователь возвращается по id (т.к. добавили только одного пользователя, то id = 1
+
+        userStorage.getAllUsers().clear();
     }
 
-    @DisplayName("Возвращает пользоваля по id")
+    @DisplayName("Проверяем метод update() для обновления пользователя с валидными полями")
     @Test
-    void userService_Return_Correct_User_By_Id() {
-        User expectedUserById1 = users.getFirst();
-        User expectedUserById5 = users.get(4);
-        User expectedUserById10 = users.get(9);
+    void userService_UpdateUser_WithValidFields_Test() {
+        User testUser = new User("testUser1email@yandex.ru", "LOGIN", "", LocalDate.of(2000, 1, 1));
+        userService.create(testUser);
+        User testUserUpdate = new User("newemail@yandex.ru", "new_login", "", LocalDate.of(2000, 1, 1));
+        testUserUpdate.setId(1L); // Устанавливаем id
+        Optional<User> actualUser = Optional.ofNullable(userService.update(testUserUpdate));
 
-        assertEquals(expectedUserById1, userController.getUserById(1L));
-        assertEquals(expectedUserById5, userController.getUserById(5L));
-        assertEquals(expectedUserById10, userController.getUserById(10L));
-        assertThrows(ValidationException.class, () -> userController.getUserById(11L));
-        assertThrows(ValidationException.class, () -> userController.getUserById(16L));
-        assertThrows(ValidationException.class, () -> userController.getUserById(0L));
-    }
+        assertTrue(actualUser.isPresent());
+        assertEquals("LOGIN", actualUser.get().getName()); // Проверяем, что имя не изменилось
+        assertEquals("newemail@yandex.ru", actualUser.get().getEmail());
+        assertEquals("new_login", actualUser.get().getLogin());
 
-    @DisplayName("Проверяет метод create()")
-    @Test
-    void userService_Create_User() {
-        assertNotNull(userController.getUserById(1L));
-        assertNotNull(userController.getUserById(5L));
-        assertNotNull(userController.getUserById(10L));
-        assertThrows(ValidationException.class, () -> userController.getUserById(12L));
-    }
-
-    @DisplayName("Проверяет метод create(). Должен возвращать исключение, если email занят")
-    @Test
-    void userService_Create_User_with_Duplicate_Email() {
-        User userWithDuplicateEmail = new User("ya.user8@yandex.ru", "User13", null, null);
-        assertThrows(ValidationException.class, () -> userController.createUser(userWithDuplicateEmail));
-    }
-
-    @DisplayName("Проверяет метод update()")
-    @Test
-    void userService_Update_Email() {
-        String newEmail = "ya.user4new@yandex.ru";
-        String name = users.get(3).getName();
-        userController.updateUser(4L, new User(newEmail, null, null, null));
-
-        assertEquals(newEmail, userController.getUserById(4L).getEmail());
-        assertEquals(name, userController.getUserById(4L).getLogin()); // Т.к. при создании объекта не было задано имя, то оно должен совпадать с логином
-    }
-
-    @DisplayName("Проверяет метод update()")
-    @Test
-    void userService_Update_Login() {
-        String newLogin = "User6new";
-        userController.updateUser(6L, new User(null, newLogin, null, null));
-
-        assertEquals(newLogin, userController.getUserById(6L).getLogin());
-        assertNotNull(userController.getUserById(6L).getEmail()); // Проверяем, что email не стал null
-        assertEquals("ya.user6@yandex.ru", userController.getUserById(6L).getEmail()); // Проверяем, что email не изменился
-    }
-
-    @DisplayName("Проверяет метод update()")
-    @Test
-    void userService_Update_Name() {
-        String newName = "User9new";
-        userController.updateUser(9L, new User(null, null, newName, null));
-        assertEquals(newName, userController.getUserById(9L).getName());
-        assertNotNull(userController.getUserById(9L).getEmail()); // Проверяем, что email не стал null
-        assertNotNull(userController.getUserById(9L).getLogin()); // Проверяем, что login не стал null
+        userStorage.getAllUsers().clear();
     }
 }

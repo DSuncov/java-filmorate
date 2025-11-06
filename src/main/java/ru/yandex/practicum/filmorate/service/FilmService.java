@@ -1,107 +1,55 @@
 package ru.yandex.practicum.filmorate.service;
 
-import jakarta.validation.ValidationException;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.validation.FilmServiceValidation;
+import ru.yandex.practicum.filmorate.service.validation.UserServiceValidation;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.List;
 
 @Service
-@Validated
+@RequiredArgsConstructor
 public class FilmService {
-    private final Map<Long, Film> films = new HashMap<>(); // храним информацию обо всех фильмах
 
-    public Map<Long, Film> getMap() {
-        return films;
-    }
+    private final FilmServiceValidation filmServiceValidation;
+    private final UserServiceValidation userServiceValidation;
+    private final FilmStorage inMemoryFilmStorage;
 
     public Collection<Film> getAllFilms() {
-        return films.values();
+        return inMemoryFilmStorage.getAllFilms().values();
     }
 
     public Film getFilmById(Long id) {
-        Optional<Film> optionalFilm = Optional.ofNullable(films.get(id));
-        return optionalFilm.orElseThrow(() -> new ValidationException("Фильма с id = " + id + " не существует"));
+        filmServiceValidation.filmExistInStorage(id);
+        return inMemoryFilmStorage.getFilmById(id);
+    }
+
+    public List<Film> getTopFilmsByLike(Long count) {
+        return inMemoryFilmStorage.getTopFilmsByLikes(count);
     }
 
     public Film create(Film film) {
-        String description = film.getDescription();
-        Optional<String> findDescription = findDescription(description);
-        if (findDescription.isPresent()) {
-            throw new ValidationException("Описание фильма совпадает с существующим в базе");
-        }
-
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года");
-        }
-
-        film.setId(getFilmId());
-        films.put(film.getId(), film);
-        return film;
+        filmServiceValidation.filmValidationForCreate(film);
+        return inMemoryFilmStorage.createFilm(film);
     }
 
     public Film update(Film film) {
-        Film updateFilm;
-        if (film != null && film.getId() != null) {
-            updateFilm = update(film.getId(), film);
-        } else {
-            throw new ValidationException("Для обновления фильма задайте id");
-        }
-        return updateFilm;
+        filmServiceValidation.filmValidationForUpdate(film);
+        return inMemoryFilmStorage.updateFilm(film);
     }
 
-    public Film update(Long id, Film film) {
-        Film oldFilmData = getFilmById(id);
-
-        if (film == null) {
-            return oldFilmData;
-        }
-
-        String name = film.getName();
-        if (name != null && !name.equals(oldFilmData.getName())) {
-            oldFilmData.setName(name);
-        }
-
-        String description = film.getDescription();
-        if (description != null && !description.isBlank() && !description.equals(oldFilmData.getDescription())) {
-            if (findDescription(description).isPresent()) {
-                throw new ValidationException("Описания совпадают");
-            }
-            oldFilmData.setDescription(description);
-        }
-
-        LocalDate releaseDate = film.getReleaseDate();
-        if (releaseDate != null && releaseDate.isBefore(LocalDate.of(1895, 12, 28))) {
-            throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года");
-        }
-
-        oldFilmData.setReleaseDate(releaseDate);
-
-        Long duration = film.getDuration();
-        if (duration != null && !duration.equals(oldFilmData.getDuration())) {
-            oldFilmData.setDuration(duration);
-        }
-        return oldFilmData;
+    public void addLikeToFilm(Long filmId, Long userId) {
+        filmServiceValidation.filmExistInStorage(filmId);
+        userServiceValidation.userExistInStorage(userId);
+        inMemoryFilmStorage.addLikeToFilm(filmId, userId);
     }
 
-    private long getFilmId() {
-        long currentMaxId = films.values().stream()
-                .map(Film::getId)
-                .max(Long::compare)
-                .orElse(0L);
-        return ++currentMaxId;
-    }
-
-    private Optional<String> findDescription(String description) {
-        return films.values().stream()
-                .map(Film::getDescription)
-                .filter(u -> u.equals(description))
-                .findFirst();
+    public void deleteLike(Long filmId, Long userId) {
+        filmServiceValidation.filmExistInStorage(filmId);
+        userServiceValidation.userExistInStorage(userId);
+        inMemoryFilmStorage.deleteLike(filmId, userId);
     }
 }

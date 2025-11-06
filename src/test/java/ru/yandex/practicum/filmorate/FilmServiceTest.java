@@ -1,68 +1,66 @@
 package ru.yandex.practicum.filmorate;
 
-import jakarta.validation.ValidationException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.controller.FilmController;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.validation.FilmServiceValidation;
+import ru.yandex.practicum.filmorate.service.validation.UserServiceValidation;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
+
 public class FilmServiceTest {
-    final FilmService filmService = new FilmService();
-    final FilmController filmController = new FilmController(filmService);
 
-    final List<Film> films = List.of(
-            new Film("Film1", "FilmDescription1", null, null),
-            new Film("Film2", "FilmDescription2", null, null),
-            new Film("Film3", "FilmDescription3", null, null),
-            new Film("Film4", "FilmDescription4", null, null),
-            new Film("Film5", "FilmDescription5", null, null),
-            new Film("Film6", "FilmDescription6", null, null),
-            new Film("Film7", "FilmDescription7", null, null),
-            new Film("Film8", "FilmDescription8", null, null),
-            new Film("Film9", "FilmDescription9", null, null),
-            new Film("Film10", "FilmDescription10", null, null));
+    private final UserStorage userStorage = new InMemoryUserStorage();
+    private final UserServiceValidation userServiceValidation = new UserServiceValidation(userStorage);
 
-    @BeforeEach
-    public void createFilmsForTesting() {
-        for (Film film : films) {
-            filmController.createFilm(film);
-        }
-    }
+    private final FilmStorage filmStorage = new InMemoryFilmStorage();
+    private final FilmServiceValidation filmServiceValidation = new FilmServiceValidation(filmStorage);
+    private final FilmService filmService = new FilmService(filmServiceValidation, userServiceValidation, filmStorage);
 
-    @AfterEach
-    public void clear() throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        filmService.getMap().clear();
-    }
-
-    @DisplayName("Проверяет размер коллекции, которую возвращает метод getAllFilms")
+    @DisplayName("Проверяем метод create() для создания фильма с валидными полями")
     @Test
-    void userController_Return_Correct_Numbers_Of_Films() {
-        int expectedSize = 10;
-        assertEquals(expectedSize, filmController.getAllFilms().size());
+    void userService_CreateFilm_WithValidFields_Test() {
+        Film testFilm1 = new Film("Фильм без названия", "Пустое описание", LocalDate.of(2000, 1, 1), 100L);
+        Film testFilm2 = new Film("Новый фильм без названия", "Пустое описание", LocalDate.of(2000, 1, 1), 100L);
+
+        Optional<Film> actualFilm = Optional.ofNullable(filmService.create(testFilm1));
+        //Пытаемся добавить фильм с таким же описанием, должно выброситься исключение
+        assertThrows(DuplicatedDataException.class, () -> filmService.create(testFilm2));
+
+        assertTrue(actualFilm.isPresent()); // Проверяем, что объект создан
+        assertEquals(1, filmStorage.getAllFilms().size());
+        assertEquals(actualFilm.get(), filmService.getFilmById(1L)); // Проверяем, что фильм возвращается по id (т.к. добавили только один фильм, то id = 1
+
+        filmStorage.getAllFilms().clear();
     }
 
-    @DisplayName("Возвращает фильм по id")
+    @DisplayName("Проверяем метод update() для обновления фильма с валидными полями")
     @Test
-    void userController_Return_Correct_Film_By_Id() {
-        Film expectedUserById1 = films.getFirst();
-        Film expectedUserById5 = films.get(4);
-        Film expectedUserById10 = films.get(9);
+    void userService_UpdateFilm_WithValidFields_Test() {
+        Film testFilm1 = new Film("Фильм без названия", "Пустое описание", LocalDate.of(2000, 1, 1), 100L);
+        Film testFilmUpdate = new Film("Новый фильм без названия", "Новое описание фильма", LocalDate.of(2000, 1, 1), 100L);
 
-        assertEquals(expectedUserById1, filmController.getFilmById(1L));
-        assertEquals(expectedUserById5, filmController.getFilmById(5L));
-        assertEquals(expectedUserById10, filmController.getFilmById(10L));
-        assertThrows(ValidationException.class, () -> filmController.getFilmById(11L));
-        assertThrows(ValidationException.class, () -> filmController.getFilmById(16L));
-        assertThrows(ValidationException.class, () -> filmController.getFilmById(0L));
+        filmService.create(testFilm1);
+        testFilmUpdate.setId(1L); // Устанавливаем id
+        Optional<Film> actualFilm = Optional.ofNullable(filmService.update(testFilmUpdate));
+
+        assertTrue(actualFilm.isPresent());
+        assertEquals("Новый фильм без названия", actualFilm.get().getName());
+        assertEquals("Новое описание фильма", actualFilm.get().getDescription());
+
+        filmStorage.getAllFilms().clear();
     }
-
 }
