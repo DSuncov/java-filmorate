@@ -73,7 +73,9 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (a, b) -> {throw new AssertionError();},
+                        (a, b) -> {
+                            throw new AssertionError();
+                            },
                         LinkedHashMap::new
                 ));
 
