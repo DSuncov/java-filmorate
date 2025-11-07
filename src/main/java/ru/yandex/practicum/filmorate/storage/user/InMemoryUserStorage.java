@@ -86,7 +86,8 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     private long getUserId() {
-        long currentMaxId = users.values().stream()
+        long currentMaxId = users.values()
+                .stream()
                 .map(User::getId)
                 .max(Long::compare)
                 .orElse(0L);

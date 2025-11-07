@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.model;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import ru.yandex.practicum.filmorate.annotations.NotWhiteSpace;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -23,7 +22,7 @@ public class User {
     private String email;
 
     @NotBlank(message = "Логин не может быть пустым")
-    @NotWhiteSpace
+    @Pattern(regexp = "^\\S+$", message = "Логин не может содержать прробелы.")
     private String login;
 
     private String name;

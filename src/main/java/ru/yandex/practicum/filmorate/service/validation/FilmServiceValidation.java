@@ -45,7 +45,8 @@ public class FilmServiceValidation {
 
     private void descriptionValidation(Film film) {
         String description = film.getDescription();
-        Optional<String> findDescription = inMemoryFilmStorage.getAllFilms().values().stream()
+        Optional<String> findDescription = inMemoryFilmStorage.getAllFilms().values()
+                .stream()
                 .map(Film::getDescription)
                 .filter(u -> u.equals(description))
                 .findFirst();

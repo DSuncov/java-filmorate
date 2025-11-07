@@ -4,7 +4,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.FilmDTO;
+import ru.yandex.practicum.filmorate.dto.Mapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -16,60 +20,53 @@ import java.util.Collection;
 public class FilmController {
 
     private final FilmService filmService;
+    private final Mapper mapper;
 
     @GetMapping("/films")
-    public Collection<Film> getAllFilms() {
-        log.info("Отправляем запрос на получение списка всех фильмов ...");
-        Collection<Film> listOfFilms = filmService.getAllFilms();
-        log.info("Список фильмов отправлен клиенту.");
-        return listOfFilms;
+    public ResponseEntity<Collection<FilmDTO>> getAllFilms() {
+        var listOfAllFilms = filmService.getAllFilms()
+                .stream()
+                .map(mapper::filmToDto)
+                .toList();
+        return ResponseEntity.ok(listOfAllFilms);
     }
 
     @GetMapping("/films/{id}")
-    public Film getFilmById(@PathVariable("id") @NotNull(message = "id фильма должно быть задано") Long filmId) {
-        log.info("Отправляем запрос на получение информации о фильме с id = {} ...", filmId);
-        Film film = filmService.getFilmById(filmId);
-        log.info("Информация о фильме с id = {} отправлена клиенту", filmId);
-        return film;
+    public ResponseEntity<FilmDTO> getFilmById(@PathVariable("id") @NotNull(message = "id фильма должно быть задано") Long filmId) {
+        var film = filmService.getFilmById(filmId);
+        return ResponseEntity.ok(mapper.filmToDto(film));
     }
 
     @GetMapping("/films/popular")
-    public Collection<Film> getTopFilms(@RequestParam(defaultValue = "10") Long count) {
-        log.info("Ищем топ-{} фильмов по количеству лайков ...", count);
-        Collection<Film> listPopularFilms = filmService.getTopFilmsByLike(count);
-        log.info("Список из {} самых популярных фильмов отправлен клиенту", count);
-        return listPopularFilms;
+    public ResponseEntity<Collection<FilmDTO>> getTopFilms(@RequestParam(defaultValue = "10") Long count) {
+        var listOfTopFilms = filmService.getTopFilmsByLike(count)
+                .stream()
+                .map(mapper::filmToDto)
+                .toList();
+        return ResponseEntity.ok(listOfTopFilms);
     }
 
     @PostMapping("/films")
-    public Film createFilm(@NotNull(message = "Передано пустое значение Film") @Valid @RequestBody Film film) {
-        log.info("Отправляем запрос на создание фильма ...");
-        Film newFilm = filmService.create(film);
-        log.info("Создан фильм с названием: {}", film.getName());
-        return newFilm;
+    public ResponseEntity<FilmDTO> createFilm(@NotNull(message = "Передано пустое значение Film") @Valid @RequestBody Film film) {
+        var newFilm = filmService.create(film);
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.filmToDto(newFilm));
     }
 
     @PutMapping("/films")
-    public Film update(@NotNull(message = "Передано пустое значение Film") @Valid @RequestBody Film film) {
-        log.info("Отправляем запрос на обновление данных фильма ...");
-        Film updateFilm = filmService.update(film);
-        log.info("Информация о фильме с id = {} и названием {} обновлена", film.getId(), film.getName());
-        return updateFilm;
+    public ResponseEntity<FilmDTO> update(@NotNull(message = "Передано пустое значение Film") @Valid @RequestBody Film film) {
+        var updateFilm = filmService.update(film);
+        return ResponseEntity.ok(mapper.filmToDto(updateFilm));
     }
 
     @PutMapping("/films/{id}/like/{userId}")
     public void addLikeToFilm(@PathVariable("id") @NotNull(message = "id фильма должно быть задано") Long filmId,
                               @PathVariable("userId") @NotNull(message = "id пользователя должно быть задано") Long userId) {
-        log.info("Отправляем запрос на добавление лайка к фильму с id {}", filmId);
         filmService.addLikeToFilm(filmId, userId);
-        log.info("Пользователь с id = {} поставил лайк фильму с id = {}", userId, filmId);
     }
 
     @DeleteMapping("/films/{id}/like/{userId}")
     public void deleteLike(@PathVariable("id") @NotNull(message = "id фильма должно быть задано") Long filmId,
                            @PathVariable("userId") @NotNull(message = "id пользователя должно быть задано") Long userId) {
-        log.info("Отправляем запрос на удаление лайка к фильму с id {}", filmId);
         filmService.deleteLike(filmId, userId);
-        log.info("Пользователь с id = {} удалил лайк у фильма с id = {}", userId, filmId);
     }
 }

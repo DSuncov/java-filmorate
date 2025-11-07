@@ -42,7 +42,8 @@ public class UserServiceValidation {
     }
 
     private void emailValidation(User user) {
-        Optional<String> findEmail = inMemoryUserStorage.getAllUsers().values().stream()
+        Optional<String> findEmail = inMemoryUserStorage.getAllUsers().values()
+                .stream()
                 .filter(u -> !u.getId().equals(user.getId()))
                 .map(User::getEmail)
                 .filter(u -> u.equals(user.getEmail()))
@@ -54,7 +55,8 @@ public class UserServiceValidation {
     }
 
     private void loginValidation(User user) {
-        Optional<String> findLogin = inMemoryUserStorage.getAllUsers().values().stream()
+        Optional<String> findLogin = inMemoryUserStorage.getAllUsers().values()
+                .stream()
                 .filter(u -> !u.getId().equals(user.getId()))
                 .map(User::getLogin)
                 .filter(u -> u.equals(user.getLogin()))
