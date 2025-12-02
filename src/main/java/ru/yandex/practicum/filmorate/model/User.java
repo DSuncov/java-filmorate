@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -13,6 +14,7 @@ import java.util.TreeSet;
  */
 @Data
 @EqualsAndHashCode(exclude = {"name", "birthday"})
+@NoArgsConstructor
 public class User {
 
     private Long id;

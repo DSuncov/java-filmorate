@@ -3,14 +3,9 @@ package ru.yandex.practicum.filmorate.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
-public class UserDTO {
+public class GenreDTO {
     private Long id;
-    private String email;
-    private String login;
     private String name;
-    private LocalDate birthday;
 }
