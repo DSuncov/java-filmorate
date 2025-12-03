@@ -1,11 +1,11 @@
 package ru.yandex.practicum.filmorate.service.validation;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Optional;
 
@@ -13,22 +13,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceValidation {
 
-    private final UserStorage inMemoryUserStorage;
+    private final UserStorage dbUserStorage;
 
-    /*
-    В контроллере с помощью аннотации проверили , что User не null и что поля валидны.
-    Остается проверить, что пользователя с таким email и логином нет в базе
-     */
     public void userValidationForCreate(User user) {
         emailValidation(user);
         loginValidation(user);
     }
 
-    /*
-    В контроллере с помощью аннотации проверили , что User не null и что поля валидны.
-    Остается проверить, что пользователь с переданным в запросе id есть в базе.
-    Далее проверяем, что новые email и login не используются другими пользователями.
-     */
     public void userValidationForUpdate(User user) {
         userExistInStorage(user.getId());
         emailValidation(user);
@@ -36,13 +27,14 @@ public class UserServiceValidation {
     }
 
     public void userExistInStorage(Long userId) {
-        if (!inMemoryUserStorage.getAllUsers().containsKey(userId)) {
-            throw new NotFoundException("Фильма с id = " + userId + " не существует.");
+
+        if (Optional.ofNullable(dbUserStorage.getUserById(userId)).isEmpty()) {
+            throw new EmptyResultDataAccessException("Пользователь с id = " + " отсутствует в БД", 0);
         }
     }
 
     private void emailValidation(User user) {
-        Optional<String> findEmail = inMemoryUserStorage.getAllUsers().values()
+        Optional<String> findEmail = dbUserStorage.getAllUsers().values()
                 .stream()
                 .filter(u -> !u.getId().equals(user.getId()))
                 .map(User::getEmail)
@@ -55,7 +47,7 @@ public class UserServiceValidation {
     }
 
     private void loginValidation(User user) {
-        Optional<String> findLogin = inMemoryUserStorage.getAllUsers().values()
+        Optional<String> findLogin = dbUserStorage.getAllUsers().values()
                 .stream()
                 .filter(u -> !u.getId().equals(user.getId()))
                 .map(User::getLogin)
