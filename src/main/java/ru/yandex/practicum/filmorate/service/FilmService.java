@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.FilmDTO;
+import ru.yandex.practicum.filmorate.dto.Mapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.validation.UserServiceValidation;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -19,41 +21,48 @@ public class FilmService {
 
     private final UserServiceValidation userServiceValidation;
     private final FilmStorage dbFilmStorage;
+    private final Mapper mapper;
 
-    public Collection<Film> getAllFilms() {
+    public Collection<FilmDTO> getAllFilms() {
         log.info("Отправляем запрос на получение списка всех фильмов ...");
-        Collection<Film> listOfAllFilms = dbFilmStorage.getAllFilms().values();
+        Collection<FilmDTO> listOfAllFilms = dbFilmStorage.getAllFilms().values()
+                .stream()
+                .map(mapper::filmToDto)
+                .toList();
         log.info("Список фильмов отправлен клиенту.");
         return listOfAllFilms;
     }
 
-    public Film getFilmById(Long filmId) {
+    public FilmDTO getFilmById(Long filmId) {
         log.info("Отправляем запрос на получение информации о фильме с id = {} ...", filmId);
         Film film = dbFilmStorage.getFilmById(filmId).get();
         log.info("Информация о фильме с id = {} отправлена клиенту", filmId);
-        return film;
+        return mapper.filmToDto(film);
     }
 
-    public List<Film> getTopFilmsByLike(Long count) {
+    public List<FilmDTO> getTopFilmsByLike(Long count) {
         log.info("Запрашиваем топ-{} фильмов по количеству лайков ...", count);
-        List<Film> listTopFilms = dbFilmStorage.getTopFilmsByLikes(count);
+        List<FilmDTO> listTopFilms = dbFilmStorage.getTopFilmsByLikes(count)
+                .stream()
+                .map(mapper::filmToDto)
+                .toList();;
         log.info("Список из {} самых популярных фильмов отправлен клиенту", count);
         return listTopFilms;
     }
 
-    public Film create(Film film) {
+    public FilmDTO create(Film film) {
         log.info("Отправляем запрос на создание фильма ...");
         Film newFilm = dbFilmStorage.createFilm(film);
         log.info("Создан фильм с названием: {}", newFilm.getName());
-        return newFilm;
+        return mapper.filmToDto(newFilm);
     }
 
-    public Film update(Film film) {
+    public FilmDTO update(Film film) {
         log.info("Отправляем запрос на обновление данных фильма ...");
         filmExistInStorage(film.getId());
         Film updateFilm = dbFilmStorage.updateFilm(film);
         log.info("Информация о фильме с id = {} и названием {} обновлена", updateFilm.getId(), updateFilm.getName());
-        return updateFilm;
+        return mapper.filmToDto(updateFilm);
     }
 
     public void addLikeToFilm(Long filmId, Long userId) {

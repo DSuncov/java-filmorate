@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.dto.GenreDTO;
-import ru.yandex.practicum.filmorate.dto.Mapper;
 import ru.yandex.practicum.filmorate.service.GenreService;
 
 import java.util.Collection;
@@ -19,20 +18,16 @@ import java.util.Collection;
 public class GenreController {
 
     private final GenreService genreService;
-    private final Mapper mapper;
 
     @GetMapping("/genres")
     public ResponseEntity<Collection<GenreDTO>> getAllGenres() {
-        var listOfAllGenres = genreService.getAllGenres()
-                .stream()
-                .map(mapper::genreToDTO)
-                .toList();
+        var listOfAllGenres = genreService.getAllGenres();
         return ResponseEntity.ok(listOfAllGenres);
     }
 
     @GetMapping("/genres/{id}")
     public ResponseEntity<GenreDTO> getGenreById(@PathVariable("id") @NotNull Long genreId) {
         var genre = genreService.getGenreById(genreId);
-        return ResponseEntity.ok(mapper.genreToDTO(genre));
+        return ResponseEntity.ok(genre);
     }
 }
