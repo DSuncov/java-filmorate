@@ -1,9 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import ru.yandex.practicum.filmorate.annotations.MinReleaseDate;
 
 import java.time.LocalDate;
@@ -32,6 +30,8 @@ public class Film {
 
     private Rating mpa;
 
+    private List<Director> directors;
+
     @NotNull(message = "Дата выхода фильма должна быть задана.")
     @MinReleaseDate(message = "Дата выхода фильма не может быть ранее 1895-12-28")
     private LocalDate releaseDate;
@@ -40,11 +40,4 @@ public class Film {
     private Long duration;
 
     private Set<Long> usersIdWhoLikes = new TreeSet<>();
-
-    public Film(String name, String description, LocalDate releaseDate, Long duration) {
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-    }
 }

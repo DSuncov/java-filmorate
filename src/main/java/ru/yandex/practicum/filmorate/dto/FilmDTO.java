@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dto;
 
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,6 +16,7 @@ public class FilmDTO {
     private String description;
     private List<GenreDTO> genres;
     private RatingDTO mpa;
+    private List<DirectorDTO> directors;
     private LocalDate releaseDate;
     private Long duration;
 }
