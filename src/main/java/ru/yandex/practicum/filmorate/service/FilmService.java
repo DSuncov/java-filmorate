@@ -21,6 +21,7 @@ public class FilmService {
 
     private final UserServiceValidation userServiceValidation;
     private final FilmStorage dbFilmStorage;
+    private final FilmStorage getDbFilmStorage;
     private final Mapper mapper;
 
     public Collection<FilmDTO> getAllFilms() {
@@ -85,5 +86,13 @@ public class FilmService {
         if (Optional.ofNullable(dbFilmStorage.getFilmById(filmId)).isEmpty()) {
             throw new EmptyResultDataAccessException("Фильм с id = " + " отсутствует в БД", 0);
         }
+    }
+
+    public Collection<FilmDTO> getAllFilmsByDirectorAndSortedBy(Long directorId, String sortRule) {
+        log.info("Отправляем запрос на получение списка всех фильмов режиссера с id {}", directorId);
+        return dbFilmStorage.getAllFilmsByDirectorAndSortedBy(directorId, sortRule)
+                .stream()
+                .map(mapper::filmToDto)
+                .toList();
     }
 }

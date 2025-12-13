@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.FilmDTO;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -13,9 +14,10 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
+@Validated
+@Slf4j
 public class FilmController {
 
     private final FilmService filmService;
@@ -24,6 +26,15 @@ public class FilmController {
     public ResponseEntity<Collection<FilmDTO>> getAllFilms() {
         var listOfAllFilms = filmService.getAllFilms();
         return ResponseEntity.ok(listOfAllFilms);
+    }
+
+    @GetMapping("films/director/{directorId}")
+    public ResponseEntity<Collection<FilmDTO>> getAllFilmsByDirectorAndSortedBy(
+            @PathVariable("directorId") @NotNull(message = "id режиссера должно быть указано") Long directorId,
+            @RequestParam("sortBy") String sortRule
+    ) {
+        var listOfFilmsByDirector = filmService.getAllFilmsByDirectorAndSortedBy(directorId, sortRule);
+        return ResponseEntity.ok(listOfFilmsByDirector);
     }
 
     @GetMapping("/films/{id}")

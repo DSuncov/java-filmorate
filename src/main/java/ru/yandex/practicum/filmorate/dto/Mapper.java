@@ -1,10 +1,7 @@
 package ru.yandex.practicum.filmorate.dto;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Rating;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,6 +37,13 @@ public class Mapper {
                     .map(this::genreToDTO)
                     .collect(Collectors.toList()));
         }
+
+        if (Optional.ofNullable(film.getDirectors()).isPresent()) {
+            dto.setDirectors(film.getDirectors().stream()
+                    .map(this::directorToDTO)
+                    .collect(Collectors.toList()));
+        }
+
         return dto;
     }
 
@@ -55,5 +59,12 @@ public class Mapper {
         dto.setId(rating.getId());
         dto.setName(rating.getName());
         return dto;
+    }
+
+    public DirectorDTO directorToDTO(Director director) {
+        return DirectorDTO.builder()
+                .id(director.getId())
+                .name(director.getName())
+                .build();
     }
 }

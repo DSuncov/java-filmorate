@@ -50,7 +50,6 @@ public class GenreDbStorage implements GenreStorage {
         return jdbcTemplate.query(sqlQuery, this::rowMapper, filmId);
     }
 
-
     private Genre rowMapper(ResultSet resultSet, int rowNum) throws SQLException {
         Genre genre = new Genre();
         genre.setId(resultSet.getLong("id"));
