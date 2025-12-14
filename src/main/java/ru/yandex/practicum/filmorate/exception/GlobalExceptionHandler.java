@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,22 +22,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(final NotFoundException e) {
-            log.error("Handle NotFoundException", e);
-        return new ErrorResponse(e.getMessage());
+        log.error("Handle NotFoundException", e);
+        return ErrorResponse.builder().error(HttpStatus.NOT_FOUND.value()).description(e.getMessage()).build();
+    }
+
+    @ExceptionHandler(EmptyResultDataAccessException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleEmptyResultDataAccessException(final EmptyResultDataAccessException e) {
+        log.error("Handle EmptyResultDataAccessException", e);
+        return ErrorResponse.builder().error(HttpStatus.NOT_FOUND.value()).description(e.getMessage()).build();
     }
 
     @ExceptionHandler(DuplicatedDataException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleDuplicatedDataException(final DuplicatedDataException e) {
         log.error("Handle DuplicatedDataException", e);
-        return new ErrorResponse(e.getMessage());
+        return ErrorResponse.builder().error(HttpStatus.BAD_REQUEST.value()).description(e.getMessage()).build();
     }
 
     @ExceptionHandler(ConditionsNotMetException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleConditionsNotMetException(final ConditionsNotMetException e) {
         log.error("Handle ConditionsNotMetException", e);
-        return new ErrorResponse(e.getMessage());
+        return ErrorResponse.builder().error(HttpStatus.BAD_REQUEST.value()).description(e.getMessage()).build();
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
