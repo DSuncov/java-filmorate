@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.FilmDTO;
-import ru.yandex.practicum.filmorate.dto.Mapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -20,42 +19,35 @@ import java.util.Collection;
 public class FilmController {
 
     private final FilmService filmService;
-    private final Mapper mapper;
 
     @GetMapping("/films")
     public ResponseEntity<Collection<FilmDTO>> getAllFilms() {
-        var listOfAllFilms = filmService.getAllFilms()
-                .stream()
-                .map(mapper::filmToDto)
-                .toList();
+        var listOfAllFilms = filmService.getAllFilms();
         return ResponseEntity.ok(listOfAllFilms);
     }
 
     @GetMapping("/films/{id}")
     public ResponseEntity<FilmDTO> getFilmById(@PathVariable("id") @NotNull(message = "id фильма должно быть задано") Long filmId) {
         var film = filmService.getFilmById(filmId);
-        return ResponseEntity.ok(mapper.filmToDto(film));
+        return ResponseEntity.ok(film);
     }
 
     @GetMapping("/films/popular")
     public ResponseEntity<Collection<FilmDTO>> getTopFilms(@RequestParam(defaultValue = "10") Long count) {
-        var listOfTopFilms = filmService.getTopFilmsByLike(count)
-                .stream()
-                .map(mapper::filmToDto)
-                .toList();
+        var listOfTopFilms = filmService.getTopFilmsByLike(count);
         return ResponseEntity.ok(listOfTopFilms);
     }
 
     @PostMapping("/films")
     public ResponseEntity<FilmDTO> createFilm(@NotNull(message = "Передано пустое значение Film") @Valid @RequestBody Film film) {
         var newFilm = filmService.create(film);
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.filmToDto(newFilm));
+        return ResponseEntity.status(HttpStatus.CREATED).body(newFilm);
     }
 
     @PutMapping("/films")
     public ResponseEntity<FilmDTO> update(@NotNull(message = "Передано пустое значение Film") @Valid @RequestBody Film film) {
         var updateFilm = filmService.update(film);
-        return ResponseEntity.ok(mapper.filmToDto(updateFilm));
+        return ResponseEntity.ok(updateFilm);
     }
 
     @PutMapping("/films/{id}/like/{userId}")
